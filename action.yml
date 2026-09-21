@@ -1,0 +1,91 @@
+name: SodaPush
+description: Send an APNs notification through your self-hosted SodaPush Server.
+author: SodaPush
+
+branding:
+  icon: send
+  color: blue
+
+inputs:
+  server-url:
+    description: Base URL or IP address of the SodaPush Server, including http:// or https://.
+    required: true
+  username:
+    description: SodaPush Server username with permission to send pushes for the app.
+    required: true
+  password:
+    description: SodaPush Server password. Store this value in GitHub Actions secrets.
+    required: true
+  app-id:
+    description: ID of the SodaPush application that sends the notification.
+    required: true
+  environment:
+    description: APNs environment, either development or production.
+    required: false
+    default: production
+  push-type:
+    description: APNs push type, either alert, background, or liveactivity.
+    required: false
+    default: alert
+  target:
+    description: JSON audience selector such as {"all":true} or {"tags":["beta"]}.
+    required: false
+    default: '{"all":true}'
+  payload:
+    description: Complete APNs JSON payload. For alert pushes, title/body can generate it instead.
+    required: false
+  title:
+    description: Alert title used when payload is omitted.
+    required: false
+  body:
+    description: Alert body used when payload is omitted.
+    required: false
+  credential-id:
+    description: Optional APNs credential ID. The environment default is used when omitted.
+    required: false
+  wait:
+    description: Wait for the push job to reach a terminal state.
+    required: false
+    default: 'true'
+  timeout-seconds:
+    description: Maximum time to wait for a terminal push status.
+    required: false
+    default: '120'
+
+outputs:
+  job-id:
+    description: ID of the created SodaPush job.
+    value: ${{ steps.send.outputs.job-id }}
+  status:
+    description: Latest push job status observed by the action.
+    value: ${{ steps.send.outputs.status }}
+  total-count:
+    description: Number of targeted devices when the final job was retrieved.
+    value: ${{ steps.send.outputs.total-count }}
+  success-count:
+    description: Number of successful APNs deliveries.
+    value: ${{ steps.send.outputs.success-count }}
+  failure-count:
+    description: Number of failed APNs deliveries.
+    value: ${{ steps.send.outputs.failure-count }}
+
+runs:
+  using: composite
+  steps:
+    - id: send
+      shell: bash
+      env:
+        INPUT_SERVER_URL: ${{ inputs.server-url }}
+        INPUT_USERNAME: ${{ inputs.username }}
+        INPUT_PASSWORD: ${{ inputs.password }}
+        INPUT_APP_ID: ${{ inputs.app-id }}
+        INPUT_ENVIRONMENT: ${{ inputs.environment }}
+        INPUT_PUSH_TYPE: ${{ inputs.push-type }}
+        INPUT_TARGET: ${{ inputs.target }}
+        INPUT_PAYLOAD: ${{ inputs.payload }}
+        INPUT_TITLE: ${{ inputs.title }}
+        INPUT_BODY: ${{ inputs.body }}
+        INPUT_CREDENTIAL_ID: ${{ inputs.credential-id }}
+        INPUT_WAIT: ${{ inputs.wait }}
+        INPUT_TIMEOUT_SECONDS: ${{ inputs.timeout-seconds }}
+      run: node "$GITHUB_ACTION_PATH/src/main.mjs"
